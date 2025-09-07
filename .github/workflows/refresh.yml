@@ -1,0 +1,31 @@
+name: Refresh Spotify Data
+
+on:
+  schedule:
+    - cron: "0 0 1 * *"   
+  workflow_dispatch:       
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: backend
+
+      - name: Run saveToMongo.js
+        run: node scripts/saveToMongo.js
+        working-directory: backend
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
+          SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
+          RAPIDAPI_KEYS: ${{ secrets.RAPIDAPI_KEYS }}
