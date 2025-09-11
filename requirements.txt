@@ -1,3 +1,3 @@
 spotipy
-spotify-scraper
+git+https://github.com/AliAkhtari78/SpotifyScraper.git
 python-dotenv
