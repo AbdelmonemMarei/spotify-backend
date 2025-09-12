@@ -2,8 +2,8 @@ name: Test Refresh Script
 
 on:
   schedule:
-    - cron: "0,10,20 * * * *"
-  workflow_dispatch: 
+    - cron: "0,10,20 * * * *"   
+  workflow_dispatch:            
 
 jobs:
   run-script:
@@ -19,11 +19,9 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-        working-directory: backend
 
       - name: Run saveToMongo.js
         run: node scripts/saveToMongo.js
-        working-directory: backend
         env:
           MONGO_URI: ${{ secrets.MONGO_URI }}
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
