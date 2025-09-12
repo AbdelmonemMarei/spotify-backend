@@ -25,6 +25,13 @@ jobs:
 
       - name: Run saveToMongo.js
         run: node scripts/saveToMongo.js
+
+      - name: Debug secrets
+        run: |
+          echo "MONGO_URI starts with: ${MONGO_URI:0:20}"
+          echo "SPOTIFY_CLIENT_ID starts with: ${SPOTIFY_CLIENT_ID:0:5}"
+          echo "SPOTIFY_CLIENT_SECRET starts with: ${SPOTIFY_CLIENT_SECRET:0:5}"
+          echo "RAPIDAPI_KEYS starts with: ${RAPIDAPI_KEYS:0:5}"
         env:
           MONGO_URI: ${{ secrets.MONGO_URI }}
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
