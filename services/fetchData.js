@@ -57,7 +57,7 @@ async function fetchCategoryDetails(genreId) {
 
 export async function fetchAllData() {
   const token = await getSpotifyToken();
-  const markets = ["EG", "US"];
+  const markets = ["EG", "US","CA"];
   const result = [];
 
   for (const market of markets) {
