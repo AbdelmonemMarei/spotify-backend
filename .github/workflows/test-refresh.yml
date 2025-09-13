@@ -8,7 +8,8 @@ on:
 jobs:
   run-script:
     runs-on: ubuntu-latest
-    env:   # 👈 مره واحدة لكل الـ steps
+    environment: production
+    env: 
       MONGO_URI: ${{ secrets.MONGO_URI }}
       SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
       SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
