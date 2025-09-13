@@ -8,6 +8,12 @@ on:
 jobs:
   run-script:
     runs-on: ubuntu-latest
+    env:   # 👈 مره واحدة لكل الـ steps
+      MONGO_URI: ${{ secrets.MONGO_URI }}
+      SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
+      SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
+      RAPIDAPI_KEYS: ${{ secrets.RAPIDAPI_KEYS }}
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -25,22 +31,10 @@ jobs:
 
       - name: Debug secrets
         run: |
-          echo "MONGO_URI starts with: ${MONGO_URI:0:20}"
-          echo "SPOTIFY_CLIENT_ID starts with: ${SPOTIFY_CLIENT_ID:0:5}"
-          echo "SPOTIFY_CLIENT_SECRET starts with: ${SPOTIFY_CLIENT_SECRET:0:5}"
-          echo "RAPIDAPI_KEYS starts with: ${RAPIDAPI_KEYS:0:5}"
-        env:
-          MONGO_URI: ${{ secrets.MONGO_URI }}
-          SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
-          SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
-          RAPIDAPI_KEYS: ${{ secrets.RAPIDAPI_KEYS }}
+          echo "MONGO_URI starts with: ${MONGO_URI:0:20} (length: ${#MONGO_URI})"
+          echo "SPOTIFY_CLIENT_ID starts with: ${SPOTIFY_CLIENT_ID:0:5} (length: ${#SPOTIFY_CLIENT_ID})"
+          echo "SPOTIFY_CLIENT_SECRET starts with: ${SPOTIFY_CLIENT_SECRET:0:5} (length: ${#SPOTIFY_CLIENT_SECRET})"
+          echo "RAPIDAPI_KEYS starts with: ${RAPIDAPI_KEYS:0:5} (length: ${#RAPIDAPI_KEYS})"
 
       - name: Run saveToMongo.js
         run: node scripts/saveToMongo.js
-        env:
-          MONGO_URI: ${{ secrets.MONGO_URI }}
-          SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
-          SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
-          RAPIDAPI_KEYS: ${{ secrets.RAPIDAPI_KEYS }}
-
-
