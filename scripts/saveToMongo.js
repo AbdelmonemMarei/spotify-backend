@@ -21,21 +21,25 @@ async function main() {
     console.log("✅ Connected to MongoDB");
 
     const data = await fetchAllData();
+
     for (const market of data) {
       await MarketModel.updateOne(
         { market: market.market },
         { $set: market },
         { upsert: true }
       );
+      console.log(`✅ Saved market: ${market.market}`);
     }
 
-    console.log("✅ Data saved to MongoDB");
+    console.log(`All ${data.length} markets saved successfully!`);
   } catch (err) {
     console.error("❌ Error:", err.message || err);
   } finally {
-    mongoose.connection.close();
+    await mongoose.connection.close();
+    console.log("✅ MongoDB connection closed");
   }
 }
 
 main();
+
 

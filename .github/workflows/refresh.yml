@@ -2,15 +2,25 @@ name: Refresh Spotify Data
 
 on:
   schedule:
-    - cron: "0 0 1 * *"   
+    - cron: "0 0 1 * *"   # Run at 00:00 on day 1 of every month
   workflow_dispatch:       
 
 jobs:
   refresh:
     runs-on: ubuntu-latest
+    environment: production
+    env: 
+      MONGO_URI: ${{ secrets.MONGO_URI }}
+      SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
+      SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
+      RAPIDAPI_KEYS: ${{ secrets.RAPIDAPI_KEYS }}
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
+
+      - name: List files
+        run: ls -R
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -19,13 +29,13 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-        working-directory: backend
+
+      - name: Debug secrets
+        run: |
+          echo "MONGO_URI starts with: ${MONGO_URI:0:20} (length: ${#MONGO_URI})"
+          echo "SPOTIFY_CLIENT_ID starts with: ${SPOTIFY_CLIENT_ID:0:5} (length: ${#SPOTIFY_CLIENT_ID})"
+          echo "SPOTIFY_CLIENT_SECRET starts with: ${SPOTIFY_CLIENT_SECRET:0:5} (length: ${#SPOTIFY_CLIENT_SECRET})"
+          echo "RAPIDAPI_KEYS starts with: ${RAPIDAPI_KEYS:0:5} (length: ${#RAPIDAPI_KEYS})"
 
       - name: Run saveToMongo.js
         run: node scripts/saveToMongo.js
-        working-directory: backend
-        env:
-          MONGO_URI: ${{ secrets.MONGO_URI }}
-          SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
-          SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
-          RAPIDAPI_KEYS: ${{ secrets.RAPIDAPI_KEYS }}
