@@ -47,6 +47,10 @@ function getRapidKey() {
   return rapidKeys[keyIndex];
 }
 
+// Simple sleep for rate limiting
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 // Get Spotify Token
 async function getSpotifyToken() {
