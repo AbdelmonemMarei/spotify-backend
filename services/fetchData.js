@@ -15,19 +15,38 @@ const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
 const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
 
 // RapidAPI keys rotation
+// RapidAPI keys rotation with per-key usage
 const rapidKeys = process.env.RAPIDAPI_KEYS.split(",");
+
 let keyIndex = 0;
+let keyUsage = new Array(rapidKeys.length).fill(0); // track usage per key
+const KEY_LIMIT = 100; // safe limit before switching
 
 function getRapidKey() {
-  const key = rapidKeys[keyIndex];
-  keyIndex = (keyIndex + 1) % rapidKeys.length;
-  return key;
+  if (rapidKeys.length === 0) {
+    throw new Error("No RapidAPI keys available in .env");
+  }
+
+  if (keyUsage[keyIndex] >= KEY_LIMIT) {
+    console.log(`Key[${keyIndex}] reached ${KEY_LIMIT}, switching...`);
+    keyIndex = (keyIndex + 1) % rapidKeys.length;
+
+
+    let attempts = 0;
+    while (keyUsage[keyIndex] >= KEY_LIMIT && attempts < rapidKeys.length) {
+      keyIndex = (keyIndex + 1) % rapidKeys.length;
+      attempts++;
+    }
+
+    if (attempts >= rapidKeys.length) {
+      throw new Error("All RapidAPI keys exhausted for this period!");
+    }
+  }
+
+  keyUsage[keyIndex]++;
+  return rapidKeys[keyIndex];
 }
 
-// Simple sleep for rate limiting
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 // Get Spotify Token
 async function getSpotifyToken() {
