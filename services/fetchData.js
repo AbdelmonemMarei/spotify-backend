@@ -19,32 +19,56 @@ const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
 const rapidKeys = process.env.RAPIDAPI_KEYS.split(",");
 
 let keyIndex = 0;
-let keyUsage = new Array(rapidKeys.length).fill(0); // track usage per key
-const KEY_LIMIT = 100; // safe limit before switching
+// Track requests per key per minute
+let keyUsage = rapidKeys.map(() => ({
+  total: 0,       // total requests (monthly-ish)
+  timestamps: []  // per-minute request timestamps
+}));
 
-function getRapidKey() {
+const KEY_LIMIT = 100; // safe monthly limit
+const PER_MINUTE_LIMIT = 15;
+const WINDOW_MS = 60 * 1000; // 1 minute
+
+async function getRapidKey() {
   if (rapidKeys.length === 0) {
     throw new Error("No RapidAPI keys available in .env");
   }
 
-  if (keyUsage[keyIndex] >= KEY_LIMIT) {
-    console.log(`Key[${keyIndex}] reached ${KEY_LIMIT}, switching...`);
-    keyIndex = (keyIndex + 1) % rapidKeys.length;
+  let attempts = 0;
 
+  while (attempts < rapidKeys.length) {
+    const usage = keyUsage[keyIndex];
 
-    let attempts = 0;
-    while (keyUsage[keyIndex] >= KEY_LIMIT && attempts < rapidKeys.length) {
+    // clean old timestamps (older than 1 min)
+    const now = Date.now();
+    usage.timestamps = usage.timestamps.filter(ts => now - ts < WINDOW_MS);
+
+    // check monthly-ish total limit
+    if (usage.total >= KEY_LIMIT) {
+      console.log(`Key[${keyIndex}] reached ${KEY_LIMIT}, switching...`);
       keyIndex = (keyIndex + 1) % rapidKeys.length;
       attempts++;
+      continue;
     }
 
-    if (attempts >= rapidKeys.length) {
-      throw new Error("All RapidAPI keys exhausted for this period!");
+    // check per-minute limit
+    if (usage.timestamps.length >= PER_MINUTE_LIMIT) {
+      const waitTime = WINDOW_MS - (now - usage.timestamps[0]);
+      console.log(
+        `Key[${keyIndex}] hit ${PER_MINUTE_LIMIT}/min, waiting ${waitTime}ms...`
+      );
+      await sleep(waitTime + 100); // wait until window clears
+      continue;
     }
+
+    // record usage
+    usage.total++;
+    usage.timestamps.push(now);
+
+    return rapidKeys[keyIndex];
   }
 
-  keyUsage[keyIndex]++;
-  return rapidKeys[keyIndex];
+  throw new Error("All RapidAPI keys exhausted or rate-limited!");
 }
 
 // Simple sleep for rate limiting
