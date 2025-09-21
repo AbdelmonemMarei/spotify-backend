@@ -119,7 +119,7 @@ async function fetchCategories(token, market) {
 
 // Fetch category details from RapidAPI
 async function fetchCategoryDetails(genreId) {
-  const key = getRapidKey();
+  const key = await getRapidKey();
   const res = await fetch(
     `https://spotify-scraper.p.rapidapi.com/v1/genre/contents?genreId=${genreId}`,
     {
