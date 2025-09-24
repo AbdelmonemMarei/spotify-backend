@@ -24,7 +24,7 @@ let keyUsage = rapidKeys.map(() => ({
   timestamps: []  // per-minute timestamps
 }));
 
-const KEY_LIMIT = 100; // monthly hard-ish limit
+const KEY_LIMIT = 120; // monthly hard-ish limit
 const PER_MINUTE_LIMIT = 15;
 const WINDOW_MS = 60 * 1000; // 1 min
 
@@ -113,7 +113,7 @@ async function getSpotifyToken() {
 // Fetch categories
 async function fetchCategories(token, market) {
   const res = await fetch(
-    `https://api.spotify.com/v1/browse/categories?country=${market}&limit=50`,
+    `https://api.spotify.com/v1/browse/categories?country=${market}&limit=56`,
     {
       headers: { Authorization: `Bearer ${token}` },
     }
