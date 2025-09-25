@@ -110,23 +110,39 @@ async function getSpotifyToken() {
   return data.access_token;
 }
 
-// Fetch categories
+// Fetch categories with pagination from Spotify to get all categories not only first 50 (Spotify API limit only returns 50)
 async function fetchCategories(token, market) {
-  const res = await fetch(
-    `https://api.spotify.com/v1/browse/categories?country=${market}&limit=56`,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-    }
-  );
+  const categories = [];
+  let offset = 0;
+  const limit = 50;
 
-  if (!res.ok) {
-    throw new Error(
-      `Spotify Categories Error (${market}): ${res.status} ${res.statusText}`
+  while (true) {
+    const res = await fetch(
+      `https://api.spotify.com/v1/browse/categories?country=${market}&limit=${limit}&offset=${offset}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
     );
+
+    if (!res.ok) {
+      throw new Error(
+        `Spotify Categories Error (${market}): ${res.status} ${res.statusText}`
+      );
+    }
+
+    const data = await res.json();
+
+    categories.push(...data.categories.items);
+
+    // Stop if we’ve got them all
+    if (categories.length >= data.categories.total) break;
+
+    offset += limit;
   }
 
-  return res.json();
+  return categories;
 }
+
 
 // Fetch category details from RapidAPI
 async function fetchCategoryDetails(genreId) {
@@ -157,11 +173,11 @@ export async function fetchAllData() {
 
   for (const market of markets) {
     console.log(`Fetching categories for market: ${market}`);
-    const categoriesData = await fetchCategories(token, market);
+    const categories = await fetchCategories(token, market);
 
     const marketData = { market, categories: [] };
 
-    for (const cat of categoriesData.categories.items) {
+    for (const cat of categories) {
       await sleep(1000); // 1 sec delay between category requests
       try {
         const details = await fetchCategoryDetails(cat.id);
@@ -169,6 +185,7 @@ export async function fetchAllData() {
         marketData.categories.push({
           id: cat.id,
           name: cat.name,
+          image: cat.icons?.[0]?.url || null,
           content: details,
         });
 
