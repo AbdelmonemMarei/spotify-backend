@@ -17,6 +17,7 @@ export const getCategories = async (req, res) => {
     const categories = market.categories.map(c => ({
       id: c.content?.id,
       name: c.name,
+      image:c.image,
     }));
 
     res.json(categories);
