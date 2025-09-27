@@ -175,7 +175,7 @@ export async function fetchAllData() {
     console.log(`Fetching categories for market: ${market}`);
     const categories = await fetchCategories(token, market);
 
-    const marketData = { market, categories: [] };
+    const marketData = { market, categories: [], sections: [] };
 
     for (const cat of categories) {
       await sleep(1000); // 1 sec delay between category requests
@@ -188,6 +188,15 @@ export async function fetchAllData() {
           image: cat.icons?.[0]?.url || null,
           content: details,
         });
+
+        marketData.sections.push(
+          ...details.contents.items.map(item => ({
+            _id: `${item.id}`,
+            title: item.title,
+            contents: item.contents,
+          }))
+        );
+
 
         console.log(`Category fetched: ${cat.name} (${market})`);
       } catch (err) {

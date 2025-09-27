@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import connectDB from "./utils/db.js";
+import sectionRoutes from "./routes/sectionRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
 import playlistRoutes from "./routes/playlistRoutes.js";
 import trackRoutes from "./routes/trackRoutes.js";
@@ -19,6 +20,7 @@ connectDB();
 
 // Routes
 app.use("/api/category", categoryRoutes);
+app.use("/api/section", sectionRoutes);
 app.use("/api/playlist", playlistRoutes);
 app.use("/api/track", trackRoutes);
 
