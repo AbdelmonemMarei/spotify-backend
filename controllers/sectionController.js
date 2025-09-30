@@ -43,10 +43,16 @@ export const getMarketSections = async (req, res) => {
       { $match: { market } },
       { $unwind: "$sections" },
 
+      {
+        $match: {
+          "sections.title": {
+            $regex: "^(radio|popular|trending|today|hits|top|latest|featured)",
+            $options: "i"
+          }
+        }
+      },
 
-      { $match: { "sections.title": { $regex: "popular", $options: "i" } } },
-
-      { $limit: 20 }, 
+      { $sample: { size: 50 } },
       { $replaceRoot: { newRoot: "$sections" } }
     ]);
 
@@ -58,6 +64,7 @@ export const getMarketSections = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
 
 
 
