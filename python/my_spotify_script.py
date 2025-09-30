@@ -145,16 +145,18 @@ def fetch_track_details(track_id_or_url):
 
 # ---------------- Main ----------------
 if __name__ == "__main__":
-    
-    action_type = "playlist"  # default action
-    value = "https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M"  # default value
-
-    if action_type == "playlist":
-        result = fetch_playlist_with_tracks(value)
-    elif action_type == "track":
-        result = fetch_track_details(value)
+    if len(sys.argv) < 3:
+        result = {"error": "Usage: python my_spotify_script.py <type:playlist|track> <id_or_url>"}
     else:
-        result = {"error": "Unknown action type"}
+        action_type = sys.argv[1]
+        value = sys.argv[2]
+
+        if action_type == "playlist":
+            result = fetch_playlist_with_tracks(value)
+        elif action_type == "track":
+            result = fetch_track_details(value)
+        else:
+            result = {"error": "Unknown action type"}
 
     print(json.dumps(result, ensure_ascii=False, indent=2))
 
