@@ -105,43 +105,32 @@ def fetch_playlist_with_tracks(playlist_url):
     }
 
 # ---------------- Track ----------------
-def fetch_track_details(track_id_or_url):
-    if "spotify.com/track/" in track_id_or_url:
-        track_id = track_id_or_url.split("track/")[-1].split("?")[0]
-    else:
-        track_id = track_id_or_url
-
-    # Web API Using Spotipy Library
+def fetch_track_details(track_id):
+    # Web API Using Spotipy Library and spotify-scraper
+    track_data = scraper.get_track_info(f"https://open.spotify.com/track/{track_id}")
     api_track = sp.track(track_id)
-    api_album = api_track["album"]
-
-    track_data = {
-        "id": api_track["id"],
-        "name": api_track["name"],
-        "artists": api_track["artists"],
-        "duration_ms": api_track["duration_ms"],
-        "preview_url": api_track["preview_url"],
-        "external_urls": api_track["external_urls"],
-        "album": {
-            "id": api_album["id"],
-            "name": api_album["name"],
-            "release_date": api_album["release_date"],
-            "total_tracks": api_album["total_tracks"],
-            "images": api_album["images"],
-            "external_urls": api_album["external_urls"]
-        }
-    }
-
-    # Scraper backup
-    scraper_track = fetch_scraper_track(track_id)
-    if not track_data["preview_url"] and scraper_track.get("preview_url"):
-        track_data["preview_url"] = scraper_track["preview_url"]
-
-    track_data["is_playable"] = scraper_track.get("is_playable")
-    track_data["is_explicit"] = scraper_track.get("is_explicit")
-    track_data["popularity"] = scraper_track.get("popularity")
+    track_data['album'] = (api_track['album'])
 
     return track_data
+
+def get_playlist_top_tracks(playlist_id_or_url, limit=5):
+    playlist_info = scraper.get_playlist_info(playlist_id_or_url)
+
+    tracks = playlist_info.get("tracks", [])
+    for idx, item in enumerate(tracks):
+        if idx >= limit:   
+            break
+
+        track_uri = item.get("uri") or item.get("id")
+        if track_uri:
+            track_id = track_uri.split(":")[-1] if ":" in track_uri else track_uri
+            track_info = fetch_track_details(track_id)
+
+            item["preview_url"] = track_info.get("preview_url")
+
+    return playlist_info
+
+
 
 # ---------------- Main ----------------
 if __name__ == "__main__":
@@ -153,6 +142,8 @@ if __name__ == "__main__":
 
         if action_type == "playlist":
             result = fetch_playlist_with_tracks(value)
+        elif action_type == "playlist_preview":
+            result = get_playlist_top_tracks(value, limit=5)
         elif action_type == "track":
             result = fetch_track_details(value)
         else:
