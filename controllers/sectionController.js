@@ -37,11 +37,16 @@ export const getRandomSections = async (req, res) => {
 // Get market sections (e.g., popular sections)
 export const getMarketSections = async (req, res) => {
   const { market } = req.params;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 3;
+  const perPage = limit;
+  const playlistLimit = 8;
 
   try {
     const docs = await MarketModel.aggregate([
       { $match: { market } },
       { $unwind: "$sections" },
+
 
       {
         $match: {
@@ -52,19 +57,41 @@ export const getMarketSections = async (req, res) => {
         }
       },
 
+      // shuffle
       { $sample: { size: 50 } },
-      { $replaceRoot: { newRoot: "$sections" } }
+
+
+      {
+        $project: {
+          _id: "$sections._id",
+          title: "$sections.title",
+          contents: {
+            totalCount: { $size: { $ifNull: ["$sections.contents.items", []] } },
+            items: {
+              $slice: [
+                { $ifNull: ["$sections.contents.items", []] },
+                playlistLimit
+              ]
+            }
+          }
+        }
+      },
+
+
+      { $skip: (page - 1) * perPage },
+      { $limit: perPage }
     ]);
 
     res.json({
-      total: docs.length, 
+      page,
+      perPage,
+      playlistLimit,
       data: docs
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
-
 
 
 
