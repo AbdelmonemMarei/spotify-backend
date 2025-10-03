@@ -113,21 +113,8 @@ def fetch_track_details(track_id):
 
     return track_data
 
-def get_playlist_top_tracks(playlist_id_or_url, limit=5):
+def get_playlist_overview_with_tracks(playlist_id_or_url, limit=5):
     playlist_info = scraper.get_playlist_info(playlist_id_or_url)
-
-    tracks = playlist_info.get("tracks", [])
-    for idx, item in enumerate(tracks):
-        if idx >= limit:   
-            break
-
-        track_uri = item.get("uri") or item.get("id")
-        if track_uri:
-            track_id = track_uri.split(":")[-1] if ":" in track_uri else track_uri
-            track_info = fetch_track_details(track_id)
-
-            item["preview_url"] = track_info.get("preview_url")
-
     return playlist_info
 
 
@@ -139,11 +126,12 @@ if __name__ == "__main__":
     else:
         action_type = sys.argv[1]
         value = sys.argv[2]
+        url_prefix = "https://open.spotify.com/playlist/"
 
         if action_type == "playlist":
             result = fetch_playlist_with_tracks(value)
         elif action_type == "playlist_preview":
-            result = get_playlist_top_tracks(value, limit=5)
+            result = get_playlist_overview_with_tracks(value)
         elif action_type == "track":
             result = fetch_track_details(value)
         else:

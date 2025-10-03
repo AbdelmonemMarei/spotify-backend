@@ -21,7 +21,7 @@ export const getPlaylistPreview = async (req, res) => {
   try {
     const previewTracks = await fetchPlaylistPreview(id, 5);
     console.log("Preview Tracks:", previewTracks);
-    res.json(previewTracks['tracks'] || []);
+    res.json(previewTracks || []);
   } catch (err) {
     console.error("Error in getPlaylistPreview:", err);
     res.status(500).json({ error: err.message });
