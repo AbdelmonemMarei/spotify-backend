@@ -117,16 +117,56 @@ def get_playlist_overview_with_tracks(playlist_id_or_url, limit=5):
     playlist_info = scraper.get_playlist_info(playlist_id_or_url)
     return playlist_info
 
+def get_playlist_overview_with_batched_tracks(playlist_id_or_url, offset=0, limit=5):
+    playlist_info = scraper.get_playlist_info(playlist_id_or_url)
+    tracks = playlist_info.get("tracks", [])
+    total_tracks = len(tracks)
+
+    offset = int(offset)
+    limit = int(limit)
+    end_index = min(offset + limit, total_tracks)
+
+    has_next = end_index < total_tracks
+
+    batched_tracks = tracks[offset:end_index]
+
+    detailed_tracks = []
+    for track in batched_tracks:
+        if "uri" in track:
+            track_id = track["uri"].split(":")[-1]
+            try:
+                track_details = scraper.get_track_info(f"https://open.spotify.com/track/{track_id}")
+                detailed_tracks.append(track_details)
+            except Exception as e:
+                print(f"Error fetching track {track_id}: {e}")
+                detailed_tracks.append(track)  # fallback
+
+    return {
+        "name": playlist_info.get("name"),
+        "id": playlist_info.get("id"),
+        "description": playlist_info.get("description"),
+        "images": list(reversed(playlist_info.get("images", []))),
+        "followers": playlist_info.get("followers", {}),
+        "owner": playlist_info.get("owner", {}),
+        "tracks": {"items": detailed_tracks},
+        "has_next": has_next,
+        "total_tracks": total_tracks,
+        "offset": offset,
+        "limit": limit,
+    }
+
+
 
 
 # ---------------- Main ----------------
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        result = {"error": "Usage: python my_spotify_script.py <type:playlist|track> <id_or_url>"}
+        result = {"error": "Usage: python my_spotify_script.py <type:playlist|track> <id_or_url> [offset] [limit]"}
     else:
         action_type = sys.argv[1]
         value = sys.argv[2]
-        url_prefix = "https://open.spotify.com/playlist/"
+        offset = int(sys.argv[3]) if len(sys.argv) > 3 else 0
+        limit = int(sys.argv[4]) if len(sys.argv) > 4 else 5
 
         if action_type == "playlist":
             result = fetch_playlist_with_tracks(value)
@@ -134,6 +174,8 @@ if __name__ == "__main__":
             result = get_playlist_overview_with_tracks(value)
         elif action_type == "track":
             result = fetch_track_details(value)
+        elif action_type == "batched_playlist":
+            result = get_playlist_overview_with_batched_tracks(value, offset=offset, limit=limit)
         else:
             result = {"error": "Unknown action type"}
 
