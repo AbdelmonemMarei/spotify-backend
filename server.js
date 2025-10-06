@@ -5,6 +5,7 @@ import connectDB from "./utils/db.js";
 import sectionRoutes from "./routes/sectionRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
 import playlistRoutes from "./routes/playlistRoutes.js";
+import albumRoutes from "./routes/albumRoutes.js";
 import trackRoutes from "./routes/trackRoutes.js";
 
 dotenv.config();
@@ -22,6 +23,7 @@ connectDB();
 app.use("/api/category", categoryRoutes);
 app.use("/api/section", sectionRoutes);
 app.use("/api/playlist", playlistRoutes);
+app.use("/api/album", albumRoutes);
 app.use("/api/track", trackRoutes);
 
 // Start server

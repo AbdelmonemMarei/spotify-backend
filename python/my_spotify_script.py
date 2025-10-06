@@ -155,6 +155,53 @@ def get_playlist_overview_with_batched_tracks(playlist_id_or_url, offset=0, limi
         "limit": limit,
     }
 
+def get_album_details_with_batched_tracks(album_id, offset=0, limit=5):
+    album_data = sp.album(album_id)
+    tracks_data = sp.album_tracks(album_id, limit=limit, offset=offset)
+    total_tracks = int(album_data['total_tracks'])
+
+    offset = int(offset)
+    limit = int(limit)
+    end_index = min(offset + limit, total_tracks)
+    has_next = end_index < total_tracks
+
+    batched_tracks = tracks_data.get('items', [])
+
+    for track in batched_tracks:
+        track_details = scraper.get_track_info(f"https://open.spotify.com/track/{track['id']}")
+        track['preview_url'] = track_details.get('preview_url')
+
+    return {
+        "id": album_data["id"],
+        "name": album_data["name"],
+        "release_date": album_data["release_date"],
+        "total_tracks": album_data["total_tracks"],
+        "images": album_data["images"],
+        "external_urls": album_data["external_urls"],
+        "artists": album_data["artists"],
+        "tracks": [
+            {
+                "id": item["id"],
+                "name": item["name"],
+                "duration_ms": item["duration_ms"],
+                "preview_url": item.get("preview_url"),
+                "external_urls": item["external_urls"],
+                "track_number": item["track_number"],
+                "artists": item["artists"],
+                "album": {
+                    "id": album_data["id"],
+                    "name": album_data["name"],
+                    "release_date": album_data["release_date"],
+                    "total_tracks": album_data["total_tracks"],
+                    "images": album_data["images"],
+                }
+            }
+            for item in batched_tracks
+        ],
+        "has_next": has_next,
+        "offset": offset,
+        "limit": limit,
+    }
 
 
 
@@ -176,6 +223,8 @@ if __name__ == "__main__":
             result = fetch_track_details(value)
         elif action_type == "batched_playlist":
             result = get_playlist_overview_with_batched_tracks(value, offset=offset, limit=limit)
+        elif action_type == "batched_album":
+            result = get_album_details_with_batched_tracks(value, offset=offset, limit=limit)
         else:
             result = {"error": "Unknown action type"}
 
