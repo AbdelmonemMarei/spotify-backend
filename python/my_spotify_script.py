@@ -125,21 +125,13 @@ def get_playlist_overview_with_batched_tracks(playlist_id_or_url, offset=0, limi
     offset = int(offset)
     limit = int(limit)
     end_index = min(offset + limit, total_tracks)
-
     has_next = end_index < total_tracks
 
     batched_tracks = tracks[offset:end_index]
 
-    detailed_tracks = []
     for track in batched_tracks:
-        if "uri" in track:
-            track_id = track["uri"].split(":")[-1]
-            try:
-                track_details = scraper.get_track_info(f"https://open.spotify.com/track/{track_id}")
-                detailed_tracks.append(track_details)
-            except Exception as e:
-                print(f"Error fetching track {track_id}: {e}")
-                detailed_tracks.append(track)  # fallback
+        track_details = scraper.get_track_info(f"https://open.spotify.com/track/{track['id']}")
+        track['preview_url'] = track_details.get('preview_url')
 
     return {
         "name": playlist_info.get("name"),
@@ -148,7 +140,7 @@ def get_playlist_overview_with_batched_tracks(playlist_id_or_url, offset=0, limi
         "images": list(reversed(playlist_info.get("images", []))),
         "followers": playlist_info.get("followers", {}),
         "owner": playlist_info.get("owner", {}),
-        "tracks": {"items": detailed_tracks},
+        "tracks": {"items": batched_tracks},
         "has_next": has_next,
         "total_tracks": total_tracks,
         "offset": offset,
@@ -165,7 +157,7 @@ def get_album_details_with_batched_tracks(album_id, offset=0, limit=5):
     end_index = min(offset + limit, total_tracks)
     has_next = end_index < total_tracks
 
-    batched_tracks = tracks_data.get('items', [])
+    batched_tracks = tracks_data.get('items', [])[offset:end_index]
 
     for track in batched_tracks:
         track_details = scraper.get_track_info(f"https://open.spotify.com/track/{track['id']}")
@@ -203,6 +195,55 @@ def get_album_details_with_batched_tracks(album_id, offset=0, limit=5):
         "limit": limit,
     }
 
+def get_artist_details_with_batched_top_tracks(artist_id, offset=0, limit=5):
+    artist_info = sp.artist(artist_id)
+    top_tracks = sp.artist_top_tracks(artist_id)
+    artist_info['top_tracks'] = top_tracks
+
+
+    offset = int(offset)
+    limit = int(limit)
+    end_index = min(offset + limit, len(artist_info['top_tracks']['tracks']))
+    has_next = end_index < len(artist_info['top_tracks']['tracks'])
+
+    batched_tracks = artist_info['top_tracks']['tracks'][offset:end_index]
+
+    for track in batched_tracks:
+        track_details = scraper.get_track_info(f"https://open.spotify.com/track/{track['id']}")
+        track['preview_url'] = track_details.get('preview_url')
+
+    artist_info['top_tracks']['tracks'] = artist_info['top_tracks']['tracks'][offset:end_index]
+
+    return {
+        "id": artist_info["id"],
+        "name": artist_info["name"],
+        "genres": artist_info["genres"],
+        "popularity": artist_info["popularity"],
+        "followers": artist_info["followers"],
+        "images": artist_info["images"],
+        'tracks': [
+            {
+                "id": track["id"],
+                "name": track["name"],
+                "duration_ms": track["duration_ms"],
+                "preview_url": track["preview_url"],
+                "external_urls": track["external_urls"],
+                "track_number": track["track_number"],
+                "album": {
+                    "id": track["album"]["id"],
+                    "name": track["album"]["name"],
+                    "release_date": track["album"]["release_date"],
+                    "total_tracks": track["album"]["total_tracks"],
+                    "images": track["album"]["images"],
+                },
+                "artists": track["artists"]
+            }
+            for track in batched_tracks
+        ],
+        "has_next": has_next,
+        "offset": offset,
+        "limit": limit
+    }
 
 
 # ---------------- Main ----------------
@@ -225,6 +266,8 @@ if __name__ == "__main__":
             result = get_playlist_overview_with_batched_tracks(value, offset=offset, limit=limit)
         elif action_type == "batched_album":
             result = get_album_details_with_batched_tracks(value, offset=offset, limit=limit)
+        elif action_type == "batched_artist":
+            result = get_artist_details_with_batched_top_tracks(value, offset=offset, limit=limit)
         else:
             result = {"error": "Unknown action type"}
 
