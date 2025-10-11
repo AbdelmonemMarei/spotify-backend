@@ -130,7 +130,9 @@ def get_playlist_overview_with_batched_tracks(playlist_id_or_url, offset=0, limi
     batched_tracks = tracks[offset:end_index]
 
     for track in batched_tracks:
-        track_details = scraper.get_track_info(f"https://open.spotify.com/track/{track['id']}")
+        track_id = track['uri'].split(":")[-1] if ":" in track['uri'] else track['uri']
+        track_details = scraper.get_track_info(f"https://open.spotify.com/track/{track_id}")
+        track['images'] = list(reversed(track_details.get('album', {}).get('images', [])))
         track['preview_url'] = track_details.get('preview_url')
 
     return {
@@ -160,7 +162,9 @@ def get_album_details_with_batched_tracks(album_id, offset=0, limit=5):
     batched_tracks = tracks_data.get('items', [])[offset:end_index]
 
     for track in batched_tracks:
-        track_details = scraper.get_track_info(f"https://open.spotify.com/track/{track['id']}")
+        track_id = track['uri'].split(":")[-1] if ":" in track['uri'] else track['uri']
+        track_details = scraper.get_track_info(f"https://open.spotify.com/track/{track_id}")
+        track['images'] = list(reversed(track_details.get('album', {}).get('images', [])))
         track['preview_url'] = track_details.get('preview_url')
 
     return {
@@ -209,7 +213,9 @@ def get_artist_details_with_batched_top_tracks(artist_id, offset=0, limit=5):
     batched_tracks = artist_info['top_tracks']['tracks'][offset:end_index]
 
     for track in batched_tracks:
-        track_details = scraper.get_track_info(f"https://open.spotify.com/track/{track['id']}")
+        track_id = track['uri'].split(":")[-1] if ":" in track['uri'] else track['uri']
+        track_details = scraper.get_track_info(f"https://open.spotify.com/track/{track_id}")
+        track['images'] = list(reversed(track_details.get('album', {}).get('images', [])))
         track['preview_url'] = track_details.get('preview_url')
 
     artist_info['top_tracks']['tracks'] = artist_info['top_tracks']['tracks'][offset:end_index]
