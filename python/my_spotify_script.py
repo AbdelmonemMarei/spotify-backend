@@ -265,6 +265,55 @@ def get_artist_details_with_batched_top_tracks(artist_id, offset=0, limit=5):
         "type": "artist"
     }
 
+def fetch_batched_tracks_by_query(query, offset=0, limit=5):
+    total_limit = 50
+    offset = int(offset)
+    limit = int(limit)
+    end_index = offset + limit
+    has_next = end_index < total_limit
+
+    # Early exit if no more tracks to fetch
+    if not has_next:
+        return {
+            "tracks": [],
+            "has_next": has_next,
+            "offset": offset,
+            "limit": limit,
+            "total_tracks": total_limit,
+            "type": "search"
+        }
+
+    # Fetch initial search results
+    sp_search = sp.search(q=query, type="track", limit=limit, offset=offset)
+    tracks = sp_search.get("tracks", {}).get("items", [])
+
+    batched_tracks = []
+    for track in tracks:
+        track_uri = track.get("uri", "")
+        track_id = track_uri.split(":")[-1] if ":" in track_uri else track_uri
+
+        # Fetch extra details
+        track_details = scraper.get_track_info(f"https://open.spotify.com/track/{track_id}")
+        track_album = sp.track(track_id).get("album", {})
+
+        batched_tracks.append({
+            **track,
+            "id": track_id,
+            "images": list(reversed(track_details.get("album", {}).get("images", []))),
+            "preview_url": track_details.get("preview_url"),
+            "album": track_album,
+            "artists": track_album.get("artists", []),
+        })
+
+    return {
+        "tracks": batched_tracks,
+        "has_next": has_next,
+        "offset": offset,
+        "limit": limit,
+        "total_tracks": total_limit,
+        "type": "search",
+    }
+
 
 # ---------------- Main ----------------
 if __name__ == "__main__":
@@ -288,6 +337,8 @@ if __name__ == "__main__":
             result = get_album_details_with_batched_tracks(value, offset=offset, limit=limit)
         elif action_type == "batched_artist":
             result = get_artist_details_with_batched_top_tracks(value, offset=offset, limit=limit)
+        elif action_type == "search_tracks":
+            result = fetch_batched_tracks_by_query(value, offset=offset, limit=limit)
         else:
             result = {"error": "Unknown action type"}
 

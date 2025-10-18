@@ -8,6 +8,7 @@ import playlistRoutes from "./routes/playlistRoutes.js";
 import albumRoutes from "./routes/albumRoutes.js";
 import artistRoutes from "./routes/artistRoutes.js";
 import trackRoutes from "./routes/trackRoutes.js";
+import searchRoutes from "./routes/searchRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -27,6 +28,9 @@ app.use("/api/playlist", playlistRoutes);
 app.use("/api/album", albumRoutes);
 app.use("/api/artist", artistRoutes);
 app.use("/api/track", trackRoutes);
+app.use("/api/search", searchRoutes);
+
+
 
 // Start server
 app.listen(PORT, () => {
